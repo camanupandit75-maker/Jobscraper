@@ -10,6 +10,7 @@ import httpx
 from .base import BaseScraper
 from config import REQUEST_DELAY_SECONDS
 from utils.logger import get_logger
+from utils.profile_locations import normalize_profile_locations
 
 logger = get_logger(__name__)
 
@@ -206,6 +207,7 @@ class IntershalaScraper(BaseScraper):
         return jobs
 
     def scrape(self, profile: dict) -> List[dict]:
+        _ = normalize_profile_locations(profile)
         all_jobs: List[dict] = []
         keywords = profile.get("keywords") or []
         if not keywords:

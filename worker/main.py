@@ -15,6 +15,7 @@ from config import (
     SUPABASE_URL, SUPABASE_KEY,
 )
 from pipeline.profiles_loader import fetch_active_search_profiles
+from utils.profile_locations import normalize_profile_locations
 from scrapers.remoteok import RemoteOKScraper
 from scrapers.indeed import IndeedScraper
 from scrapers.naukri import NaukriScraper
@@ -42,7 +43,14 @@ def resolve_search_profiles() -> list:
         logger.info(f"Using {len(db_profiles)} active profile(s) from Supabase search_profiles")
         return db_profiles
     logger.info("No active search_profiles in Supabase — using config.SEARCH_PROFILES")
-    return list(SEARCH_PROFILES)
+    expanded = []
+    for p in SEARCH_PROFILES:
+        q = dict(p)
+        q["locations"] = normalize_profile_locations(q)
+        if not (q.get("location") or "").strip() and q["locations"]:
+            q["location"] = q["locations"][0] or ""
+        expanded.append(q)
+    return expanded
 
 
 SCRAPER_MAP = {

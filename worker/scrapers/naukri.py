@@ -6,6 +6,7 @@ from typing import List, Optional
 from .base import BaseScraper
 from config import REQUEST_DELAY_SECONDS
 from utils.logger import get_logger
+from utils.profile_locations import normalize_profile_locations
 
 logger = get_logger(__name__)
 
@@ -73,6 +74,7 @@ class NaukriScraper(BaseScraper):
             return None
 
     def scrape(self, profile: dict) -> List[dict]:
+        _ = normalize_profile_locations(profile)
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:

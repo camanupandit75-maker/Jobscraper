@@ -4,6 +4,7 @@ Load search profiles from Supabase for the worker (replaces config when non-empt
 import httpx
 from config import SUPABASE_URL, SUPABASE_KEY
 from utils.logger import get_logger
+from utils.profile_locations import infer_indeed_base_from_locations
 
 logger = get_logger(__name__)
 
@@ -15,38 +16,29 @@ REST_HEADERS = {
 
 
 def _db_row_to_worker_profile(row: dict) -> dict:
-    loc = (row.get("location") or "").strip()
+    loc_raw = (row.get("location") or "").strip()
+    locations = [p.strip() for p in loc_raw.split(",") if p.strip()] if loc_raw else []
+    if not locations:
+        locations = [""]
+
     sites = [str(s) for s in (row.get("sites") or []) if s]
     keywords = [str(k) for k in (row.get("keywords") or []) if k]
     profile = {
         "name": (row.get("name") or "").strip() or "unnamed",
         "keywords": keywords,
-        "location": loc,
+        "locations": locations,
+        "location": locations[0] if locations and locations[0] else "",
         "sites": sites,
-        "remote": loc.lower() == "remote",
+        "remote": any((x or "").lower() == "remote" for x in locations),
         "job_type": "full-time",
     }
-    ll = loc.lower()
-    if "india" in ll or ll == "india":
-        profile["indeed_base_url"] = "https://in.indeed.com"
-    elif any(
-        x in ll
-        for x in (
-            "uae",
-            "emirates",
-            "dubai",
-            "abu dhabi",
-            "middle east",
-            "gulf",
-            "ksa",
-            "saudi",
-            "qatar",
-            "kuwait",
-            "bahrain",
-            "oman",
-        )
-    ):
-        profile["indeed_base_url"] = "https://gulf.indeed.com"
+    # Single region → stable default host; multiple → omit so Indeed infers per location
+    if len(locations) == 1:
+        profile["indeed_base_url"] = infer_indeed_base_from_locations(locations)
+    elif len(locations) > 1:
+        pass  # Indeed scraper uses infer_indeed_base_for_location per query
+    else:
+        profile["indeed_base_url"] = "https://www.indeed.com"
     return profile
 
 

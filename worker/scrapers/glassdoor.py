@@ -5,6 +5,7 @@ import time
 from urllib.parse import quote_plus
 from .base import BaseScraper
 from utils.logger import get_logger
+from utils.profile_locations import normalize_profile_locations
 
 logger = get_logger(__name__)
 
@@ -20,7 +21,8 @@ class GlassdoorScraper(BaseScraper):
 
         all_jobs = []
         keywords = profile.get("keywords", [])
-        location = profile.get("location", "")
+        locs = normalize_profile_locations(profile)
+        location = locs[0] if locs else ""
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
@@ -29,7 +31,6 @@ class GlassdoorScraper(BaseScraper):
             for keyword in keywords[:1]:
                 try:
                     q = quote_plus(keyword)
-                    l = quote_plus(location)
                     url = f"https://www.glassdoor.com/Job/jobs.htm?sc.keyword={q}&locT=N&locId=115&sortBy=date_desc"
                     page.goto(url, wait_until="domcontentloaded", timeout=30000)
                     time.sleep(4)

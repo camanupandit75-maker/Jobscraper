@@ -6,6 +6,7 @@ from typing import List
 from urllib.parse import quote_plus
 from .base import BaseScraper
 from utils.logger import get_logger
+from utils.profile_locations import normalize_profile_locations
 
 logger = get_logger(__name__)
 
@@ -19,6 +20,7 @@ class WellfoundScraper(BaseScraper):
             logger.warning("Playwright not installed. Skipping Wellfound.")
             return []
 
+        _ = normalize_profile_locations(profile)
         all_jobs: List[dict] = []
         keywords = profile.get("keywords", [])
 

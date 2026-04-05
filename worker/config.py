@@ -95,7 +95,21 @@ SEARCH_PROFILES = [
         "remote": True,
         "job_type": "full-time",
         "sites": ["remoteok", "wellfound"]
-    }
+    },
+    {
+        "name": "ai",
+        "keywords": [
+            "AI engineer",
+            "machine learning",
+            "ML engineer",
+            "artificial intelligence",
+            "LLM",
+        ],
+        "location": "india, uae, remote",
+        "remote": True,
+        "job_type": "full-time",
+        "sites": ["indeed", "linkedin", "remoteok"],
+    },
 ]
 
 # ── Request settings ──────────────────────────────────────

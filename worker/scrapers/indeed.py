@@ -2,8 +2,10 @@ import time
 from typing import Optional
 from urllib.parse import quote_plus, urlparse, parse_qs
 from .base import BaseScraper
-from config import REQUEST_DELAY_SECONDS
+from config import MAX_JOBS_PER_SITE_PER_RUN, REQUEST_DELAY_SECONDS
 from utils.logger import get_logger
+from utils.profile_locations import infer_indeed_base_for_location, normalize_profile_locations
+from utils.job_location_filter import filter_jobs_by_western_exclusion
 
 logger = get_logger(__name__)
 
@@ -115,19 +117,19 @@ class IndeedScraper(BaseScraper):
             cards = links
         return cards
 
-    def scrape(self, profile: dict) -> list[dict]:
+    def scrape(self, profile: dict) -> list:
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
             logger.warning("Playwright not installed. Skipping Indeed.")
             return []
 
-        all_jobs: list[dict] = []
+        locs = normalize_profile_locations(profile)
         keywords = profile.get("keywords", [])
-        location = profile.get("location", "")
-        self._indeed_base_url = str(
-            profile.get("indeed_base_url") or "https://www.indeed.com"
-        ).rstrip("/")
+        explicit_base = profile.get("indeed_base_url")
+        explicit_base = str(explicit_base).rstrip("/") if explicit_base else None
+
+        by_hash: dict = {}
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
@@ -135,23 +137,30 @@ class IndeedScraper(BaseScraper):
             page = context.new_page()
 
             for keyword in keywords[:3]:
-                try:
-                    url = self._build_url(keyword, location)
-                    page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                    time.sleep(3)
+                for loc in locs:
+                    if explicit_base:
+                        self._indeed_base_url = explicit_base
+                    else:
+                        self._indeed_base_url = infer_indeed_base_for_location(loc)
+                    try:
+                        url = self._build_url(keyword, loc)
+                        page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                        time.sleep(3)
 
-                    cards = self._collect_cards(page)
-                    for card in cards[:50]:
-                        job = self._extract_job_from_card(card)
-                        if job:
-                            job["hash"] = self.make_hash(job)
-                            all_jobs.append(job)
+                        cards = self._collect_cards(page)
+                        for card in cards[:50]:
+                            job = self._extract_job_from_card(card)
+                            if job:
+                                job["hash"] = self.make_hash(job)
+                                by_hash[job["hash"]] = job
 
-                    time.sleep(REQUEST_DELAY_SECONDS)
-                except Exception as e:
-                    logger.error(f"Indeed scrape error for '{keyword}': {e}")
+                        time.sleep(REQUEST_DELAY_SECONDS)
+                    except Exception as e:
+                        logger.error(f"Indeed scrape error for '{keyword}' @ '{loc}': {e}")
 
             browser.close()
 
-        logger.info(f"Indeed: found {len(all_jobs)} jobs")
-        return all_jobs
+        deduped = filter_jobs_by_western_exclusion(list(by_hash.values()), locs)
+        deduped = deduped[:MAX_JOBS_PER_SITE_PER_RUN]
+        logger.info(f"Indeed: found {len(deduped)} jobs (deduped, cap {MAX_JOBS_PER_SITE_PER_RUN})")
+        return deduped

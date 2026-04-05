@@ -3,6 +3,7 @@ import httpx
 from datetime import datetime
 from .base import BaseScraper
 from utils.logger import get_logger
+from utils.profile_locations import normalize_profile_locations
 
 logger = get_logger(__name__)
 
@@ -45,6 +46,7 @@ class RemoteOKScraper(BaseScraper):
     API_URL = "https://remoteok.com/api"
 
     def scrape(self, profile: dict) -> list[dict]:
+        _ = normalize_profile_locations(profile)
         words = _tokenize_keywords(profile.get("keywords", []))
         jobs = []
         try:
