@@ -1,9 +1,8 @@
-import hashlib
 from abc import ABC, abstractmethod
 from datetime import datetime
-from urllib.parse import urlparse, urlunparse
 from utils.user_agents import get_random_user_agent
 from utils.logger import get_logger
+from utils.job_hash import compute_job_hash
 
 logger = get_logger(__name__)
 
@@ -44,20 +43,6 @@ class BaseScraper(ABC):
             "posted_at": raw.get("posted_at") or datetime.utcnow().isoformat(),
         }
 
-    def _normalize_url_for_hash(self, url: str) -> str:
-        """Strip query, fragment, and trailing slashes so the same job URL hashes consistently."""
-        u = (url or "").strip()
-        if not u:
-            return ""
-        parsed = urlparse(u)
-        path = parsed.path.rstrip("/") or "/"
-        netloc = parsed.netloc.lower()
-        scheme = (parsed.scheme or "https").lower()
-        normalized = urlunparse((scheme, netloc, path, "", "", ""))
-        return normalized.lower()
-
     def make_hash(self, job: dict) -> str:
         """Create a unique hash for deduplication."""
-        url_norm = self._normalize_url_for_hash(job.get("url", "") or "")
-        key = f"{job.get('title', '').lower()}{job.get('company', '').lower()}{url_norm}"
-        return hashlib.md5(key.encode()).hexdigest()
+        return compute_job_hash(job)

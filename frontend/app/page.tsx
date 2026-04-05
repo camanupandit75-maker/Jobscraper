@@ -10,7 +10,7 @@ import { ExportButton } from "@/components/ExportButton";
 import { ScrapeStatusBadge } from "@/components/ScrapeStatusBadge";
 import type { Job, JobFilters, ScrapeRun } from "@/types/job";
 
-const LIMIT = 50;
+const LIMIT = 100;
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState<JobFilters>({
@@ -18,8 +18,10 @@ export default function DashboardPage() {
     source: "",
     status: "",
     job_type: "",
+    location: "",
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedLocation, setDebouncedLocation] = useState("");
   const [page, setPage] = useState(1);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
@@ -64,8 +66,13 @@ export default function DashboardPage() {
   }, [filters.search]);
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedLocation(filters.location), 300);
+    return () => clearTimeout(t);
+  }, [filters.location]);
+
+  useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, filters.source, filters.status, filters.job_type]);
+  }, [debouncedSearch, debouncedLocation, filters.source, filters.status, filters.job_type]);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,10 +80,12 @@ export default function DashboardPage() {
       setLoading(true);
       const params = new URLSearchParams();
       if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+      if (debouncedLocation.trim()) params.set("location", debouncedLocation.trim());
       if (filters.source) params.set("source", filters.source);
       if (filters.status) params.set("status", filters.status);
       if (filters.job_type) params.set("job_type", filters.job_type);
       params.set("page", String(page));
+      params.set("limit", String(LIMIT));
       try {
         const res = await fetch(`/api/jobs?${params.toString()}`);
         const data = await res.json();
@@ -101,6 +110,7 @@ export default function DashboardPage() {
     };
   }, [
     debouncedSearch,
+    debouncedLocation,
     filters.source,
     filters.status,
     filters.job_type,
@@ -185,6 +195,12 @@ export default function DashboardPage() {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+  const rangeStart =
+    !loading && total > 0 && jobs.length > 0 ? (page - 1) * LIMIT + 1 : 0;
+  const rangeEnd =
+    !loading && total > 0 && jobs.length > 0
+      ? (page - 1) * LIMIT + jobs.length
+      : 0;
   const lastEnded = lastRuns[0]?.ended_at;
   const lastStatus = lastRuns[0]?.status;
 
@@ -256,10 +272,21 @@ export default function DashboardPage() {
             <FilterPanel
               filters={filters}
               debouncedSearch={debouncedSearch}
+              debouncedLocation={debouncedLocation}
               onSearchChange={(v) => setFilters((f) => ({ ...f, search: v }))}
               onFilterChange={onFilterChange}
             />
           </div>
+
+          {!loading && (
+            <p className="mb-4 font-mono text-xs text-[var(--muted)]">
+              {total === 0
+                ? "Showing 0 of 0 jobs"
+                : rangeStart > 0 && rangeEnd > 0
+                  ? `Showing ${rangeStart}–${rangeEnd} of ${total} jobs`
+                  : `Showing 0 of ${total} jobs`}
+            </p>
+          )}
 
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2">
@@ -288,7 +315,7 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {totalPages > 1 && (
+              {total > 0 && (
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-2 font-mono text-xs">
                   <button
                     type="button"
@@ -296,7 +323,7 @@ export default function DashboardPage() {
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     className="rounded border border-[var(--border)] px-3 py-1.5 disabled:opacity-30 hover:border-[var(--accent)]"
                   >
-                    Prev
+                    Previous
                   </button>
                   <span className="text-[var(--muted)] px-2">
                     Page {page} / {totalPages}

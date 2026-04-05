@@ -36,4 +36,5 @@ export interface JobFilters {
   source: string;
   status: string;
   job_type: string;
+  location: string;
 }

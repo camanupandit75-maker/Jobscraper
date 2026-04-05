@@ -7,6 +7,10 @@ import {
   type SearchProfile,
 } from "@/types/searchProfile";
 
+function locationSegments(raw: string | null | undefined): string[] {
+  return (raw ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<SearchProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,73 +235,99 @@ export default function ProfilesPage() {
             </p>
           ) : (
             <ul className="space-y-4">
-              {profiles.map((p) => (
-                <li
-                  key={p.id}
-                  className="rounded border border-[var(--border)] bg-[var(--surface)] p-4 md:p-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-                    <h3 className="font-display text-lg font-semibold text-white">
-                      {p.name || "—"}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                        <input
-                          type="checkbox"
-                          checked={!!p.is_active}
-                          onChange={() => toggleActive(p)}
-                          className="accent-[var(--accent)]"
-                        />
-                        Active
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(p.id)}
-                        className="rounded border border-[var(--danger)] px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--danger)] transition hover:bg-[var(--danger)] hover:text-[var(--bg)]"
-                      >
-                        Delete
-                      </button>
+              {profiles.map((p) => {
+                const keywords = (p.keywords ?? []).filter(Boolean);
+                const locs = locationSegments(p.location);
+                return (
+                  <li
+                    key={p.id}
+                    className="rounded border border-[var(--border)] bg-[var(--surface)] p-4 md:p-5"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                      <h3 className="font-display text-lg font-semibold text-white">
+                        {p.name || "—"}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
+                          <input
+                            type="checkbox"
+                            checked={!!p.is_active}
+                            onChange={() => toggleActive(p)}
+                            className="accent-[var(--accent)]"
+                          />
+                          Active
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(p.id)}
+                          className="rounded border border-[var(--danger)] px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--danger)] transition hover:bg-[var(--danger)] hover:text-[var(--bg)]"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <dl className="grid gap-2 font-mono text-xs text-[var(--muted)]">
-                    <div>
-                      <dt className="text-[var(--border)] uppercase text-[10px] tracking-wider">
-                        Keywords
-                      </dt>
-                      <dd className="text-[var(--text)] mt-0.5">
-                        {(p.keywords ?? []).join(", ") || "—"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[var(--border)] uppercase text-[10px] tracking-wider">
-                        Location
-                      </dt>
-                      <dd className="text-[var(--text)] mt-0.5">
-                        {p.location || "—"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[var(--border)] uppercase text-[10px] tracking-wider">
-                        Sites
-                      </dt>
-                      <dd className="text-[var(--text)] mt-0.5 flex flex-wrap gap-1.5 mt-1">
-                        {(p.sites ?? []).length ? (
-                          (p.sites ?? []).map((s) => (
-                            <span
-                              key={s}
-                              className="rounded border border-[var(--border)] px-2 py-0.5 text-[10px] uppercase text-[var(--accent2)]"
-                            >
-                              {s}
-                            </span>
-                          ))
-                        ) : (
-                          "—"
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                </li>
-              ))}
+                    <dl className="grid gap-2 font-mono text-xs text-[var(--muted)]">
+                      <div>
+                        <dt className="text-[var(--border)] uppercase text-[10px] tracking-wider">
+                          Keywords
+                        </dt>
+                        <dd className="text-[var(--text)] mt-0.5 flex flex-wrap gap-1.5 mt-1">
+                          {keywords.length ? (
+                            keywords.map((kw, i) => (
+                              <span
+                                key={`${p.id}-kw-${i}`}
+                                className="rounded-full border border-[var(--accent)]/45 bg-[var(--accent)]/12 px-2.5 py-0.5 text-[10px] font-medium text-[var(--accent)]"
+                              >
+                                {kw}
+                              </span>
+                            ))
+                          ) : (
+                            "—"
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[var(--border)] uppercase text-[10px] tracking-wider">
+                          Location
+                        </dt>
+                        <dd className="text-[var(--text)] mt-0.5 flex flex-wrap gap-1.5 mt-1">
+                          {locs.length ? (
+                            locs.map((loc, i) => (
+                              <span
+                                key={`${p.id}-loc-${i}`}
+                                className="rounded-full border border-[var(--accent2)]/45 bg-[var(--accent2)]/10 px-2.5 py-0.5 text-[10px] font-medium text-[var(--accent2)]"
+                              >
+                                {loc}
+                              </span>
+                            ))
+                          ) : (
+                            "—"
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[var(--border)] uppercase text-[10px] tracking-wider">
+                          Sites
+                        </dt>
+                        <dd className="text-[var(--text)] mt-0.5 flex flex-wrap gap-1.5 mt-1">
+                          {(p.sites ?? []).length ? (
+                            (p.sites ?? []).map((s) => (
+                              <span
+                                key={s}
+                                className="rounded border border-[var(--border)] px-2 py-0.5 text-[10px] uppercase text-[var(--accent2)]"
+                              >
+                                {s}
+                              </span>
+                            ))
+                          ) : (
+                            "—"
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

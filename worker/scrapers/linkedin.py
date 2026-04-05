@@ -32,7 +32,7 @@ class LinkedInScraper(BaseScraper):
             context = browser.new_context(user_agent=self.get_headers()["User-Agent"])
             page = context.new_page()
 
-            for keyword in keywords[:2]:
+            for keyword in keywords[:6]:
                 for location in locs:
                     try:
                         q = quote_plus(keyword)

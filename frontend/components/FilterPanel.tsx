@@ -30,6 +30,7 @@ const JOB_TYPES = [
 type Props = {
   filters: JobFilters;
   debouncedSearch: string;
+  debouncedLocation: string;
   onSearchChange: (v: string) => void;
   onFilterChange: (key: keyof JobFilters, value: string) => void;
 };
@@ -37,6 +38,7 @@ type Props = {
 export function FilterPanel({
   filters,
   debouncedSearch,
+  debouncedLocation,
   onSearchChange,
   onFilterChange,
 }: Props) {
@@ -55,7 +57,7 @@ export function FilterPanel({
         />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <div>
           <label className="block text-[10px] uppercase tracking-widest text-[var(--muted)] mb-1.5">
             Source
@@ -104,10 +106,29 @@ export function FilterPanel({
             ))}
           </select>
         </div>
+        <div>
+          <label className="block text-[10px] uppercase tracking-widest text-[var(--muted)] mb-1.5">
+            Location
+          </label>
+          <input
+            type="text"
+            value={filters.location}
+            onChange={(e) => onFilterChange("location", e.target.value)}
+            placeholder="India, Dubai, Remote…"
+            className="w-full rounded border border-[var(--border)] bg-[#0a0a10] px-3 py-2 font-mono text-xs text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+          />
+        </div>
       </div>
 
-      {debouncedSearch !== filters.search && (
-        <p className="text-[10px] text-[var(--muted)] font-mono">Updating search…</p>
+      {(debouncedSearch !== filters.search ||
+        debouncedLocation !== filters.location) && (
+        <p className="text-[10px] text-[var(--muted)] font-mono">
+          {debouncedSearch !== filters.search && debouncedLocation !== filters.location
+            ? "Updating search and location…"
+            : debouncedSearch !== filters.search
+              ? "Updating search…"
+              : "Updating location…"}
+        </p>
       )}
     </div>
   );

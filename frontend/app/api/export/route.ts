@@ -13,6 +13,12 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status") || "";
   const job_type = searchParams.get("job_type") || "";
   const search = searchParams.get("search") || "";
+  const locationParam = searchParams.get("location") || "";
+  const locationTerm = locationParam
+    .trim()
+    .replace(/,/g, " ")
+    .replace(/%/g, "")
+    .replace(/_/g, "");
 
   let query = supabase
     .from("jobs")
@@ -23,6 +29,9 @@ export async function GET(req: NextRequest) {
 
   if (search) {
     query = query.or(`title.ilike.%${search}%,company.ilike.%${search}%`);
+  }
+  if (locationTerm) {
+    query = query.ilike("location", `%${locationTerm}%`);
   }
   if (source) query = query.eq("source", source);
   if (status) query = query.eq("status", status);

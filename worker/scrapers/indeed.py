@@ -136,7 +136,7 @@ class IndeedScraper(BaseScraper):
             context = browser.new_context(user_agent=self.get_headers()["User-Agent"])
             page = context.new_page()
 
-            for keyword in keywords[:3]:
+            for keyword in keywords[:6]:
                 for loc in locs:
                     if explicit_base:
                         self._indeed_base_url = explicit_base

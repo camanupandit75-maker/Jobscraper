@@ -10,6 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-ibm)", "IBM Plex Mono", "monospace"],
+        mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
         display: ["var(--font-syne)", "Syne", "sans-serif"],
       },
       colors: {

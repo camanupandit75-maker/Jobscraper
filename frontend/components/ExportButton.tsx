@@ -10,6 +10,7 @@ type Props = {
 function buildQuery(f: JobFilters): string {
   const p = new URLSearchParams();
   if (f.search.trim()) p.set("search", f.search.trim());
+  if (f.location.trim()) p.set("location", f.location.trim());
   if (f.source) p.set("source", f.source);
   if (f.status) p.set("status", f.status);
   if (f.job_type) p.set("job_type", f.job_type);

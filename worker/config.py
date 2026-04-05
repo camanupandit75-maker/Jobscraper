@@ -9,7 +9,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
 # ── Scrape schedule ───────────────────────────────────────
 SCRAPE_INTERVAL_HOURS = 4
-MAX_JOBS_PER_SITE_PER_RUN = 50
+MAX_JOBS_PER_SITE_PER_RUN = 100
 
 # ── Your search profiles ──────────────────────────────────
 # Edit keywords and locations to match what you're looking for
