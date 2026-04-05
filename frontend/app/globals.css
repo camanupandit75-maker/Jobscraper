@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:        #0d0d14;
+  --surface:   #13131f;
+  --border:    #1e1e30;
+  --accent:    #e8c547;
+  --accent2:   #4fc3f7;
+  --text:      #e8e8f0;
+  --muted:     #6b6b85;
+  --danger:    #ff6b6b;
+  --success:   #69db7c;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  font-family: 'Syne', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.source-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.source-remoteok    { background: #1a3a1a; color: #69db7c; border: 1px solid #2a5a2a; }
+.source-indeed      { background: #1a2a3a; color: #4fc3f7; border: 1px solid #2a4a5a; }
+.source-naukri      { background: #3a1a1a; color: #ff6b6b; border: 1px solid #5a2a2a; }
+.source-linkedin    { background: #1a2a3a; color: #60a5fa; border: 1px solid #2a3a5a; }
+.source-wellfound   { background: #3a2a1a; color: #e8c547; border: 1px solid #5a4a2a; }
+.source-internshala { background: #2a1a3a; color: #c084fc; border: 1px solid #4a2a5a; }
+.source-glassdoor   { background: #1a3a2a; color: #34d399; border: 1px solid #2a5a3a; }
