@@ -18,7 +18,7 @@ from pipeline.profiles_loader import fetch_active_search_profiles
 from utils.profile_locations import normalize_profile_locations
 from scrapers.remoteok import RemoteOKScraper
 from scrapers.indeed import IndeedScraper
-from scrapers.naukri import NaukriScraper
+from scrapers.naukri_apify import NaukriApifyScraper
 from scrapers.internshala import IntershalaScraper
 from scrapers.linkedin import LinkedInScraper
 from scrapers.wellfound import WellfoundScraper
@@ -56,7 +56,7 @@ def resolve_search_profiles() -> list:
 SCRAPER_MAP = {
     "remoteok":    RemoteOKScraper(),
     "indeed":      IndeedScraper(),
-    "naukri":      NaukriScraper(),
+    "naukri":      NaukriApifyScraper(),
     "internshala": IntershalaScraper(),
     "linkedin":    LinkedInScraper(),
     "wellfound":   WellfoundScraper(),
