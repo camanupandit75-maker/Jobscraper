@@ -37,6 +37,8 @@ export default function DashboardPage() {
   const [triggerLoading, setTriggerLoading] = useState(false);
   const [cleanupMessage, setCleanupMessage] = useState<string | null>(null);
   const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [cleanupBeforeDate, setCleanupBeforeDate] = useState("");
+  const [deleteBeforeLoading, setDeleteBeforeLoading] = useState(false);
   const [jobsRefreshNonce, setJobsRefreshNonce] = useState(0);
 
   const fetchStats = useCallback(async () => {
@@ -182,8 +184,11 @@ export default function DashboardPage() {
         setCleanupMessage(data.error || "Cleanup failed.");
         return;
       }
+      const n = data.deleted ?? 0;
+      const h = data.hiddenOlderThan7Days ?? 0;
+      const s = data.staleOlderThan30Days ?? 0;
       setCleanupMessage(
-        `Removed ${data.totalDeleted ?? 0} job(s) (${data.hiddenOlderThan7Days ?? 0} hidden >7d, ${data.staleOlderThan30Days ?? 0} stale >30d).`
+        `Success: deleted ${n} job(s) (${h} hidden >7d, ${s} stale non-applied >30d).`
       );
       await fetchStats();
       setJobsRefreshNonce((n) => n + 1);
@@ -191,6 +196,53 @@ export default function DashboardPage() {
       setCleanupMessage("Cleanup request failed.");
     } finally {
       setCleanupLoading(false);
+    }
+  }
+
+  function formatCleanupDateLabel(isoDate: string): string {
+    try {
+      const d = new Date(`${isoDate}T12:00:00`);
+      return d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return isoDate;
+    }
+  }
+
+  async function handleDeleteBeforeDate() {
+    const d = cleanupBeforeDate.trim();
+    if (!d) {
+      setCleanupMessage("Choose a date first.");
+      return;
+    }
+    if (!confirm(`Delete all non-bookmarked, non-applied jobs scraped before ${d}?`)) {
+      return;
+    }
+    setDeleteBeforeLoading(true);
+    setCleanupMessage(null);
+    try {
+      const res = await fetch("/api/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ beforeDate: d }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCleanupMessage(data.error || "Delete failed.");
+        return;
+      }
+      const n = data.deleted ?? 0;
+      const label = formatCleanupDateLabel(data.beforeDate ?? d);
+      setCleanupMessage(`Deleted ${n} job(s) before ${label}.`);
+      await fetchStats();
+      setJobsRefreshNonce((x) => x + 1);
+    } catch {
+      setCleanupMessage("Delete request failed.");
+    } finally {
+      setDeleteBeforeLoading(false);
     }
   }
 
@@ -259,11 +311,32 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={handleCleanup}
-              disabled={cleanupLoading}
+              disabled={cleanupLoading || deleteBeforeLoading}
               className="w-full rounded border border-[var(--border)] px-4 py-2.5 font-mono text-xs uppercase tracking-wider text-[var(--text)] transition hover:border-[var(--danger)] hover:text-[var(--danger)] disabled:opacity-50"
             >
               {cleanupLoading ? "…" : "🗑 Clean old jobs"}
             </button>
+
+            <div className="pt-4 mt-4 border-t border-[var(--border)] space-y-2">
+              <label className="block text-[10px] uppercase tracking-widest text-[var(--muted)]">
+                Delete before date
+              </label>
+              <input
+                type="date"
+                value={cleanupBeforeDate}
+                onChange={(e) => setCleanupBeforeDate(e.target.value)}
+                disabled={cleanupLoading || deleteBeforeLoading}
+                className="w-full rounded border border-[var(--border)] bg-[#0a0a10] px-3 py-2 font-mono text-xs text-[var(--text)] [color-scheme:dark] focus:border-[var(--accent)] focus:outline-none disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={handleDeleteBeforeDate}
+                disabled={cleanupLoading || deleteBeforeLoading || !cleanupBeforeDate}
+                className="w-full rounded border border-[var(--border)] px-4 py-2.5 font-mono text-xs uppercase tracking-wider text-[var(--text)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-50"
+              >
+                {deleteBeforeLoading ? "…" : "Delete before this date"}
+              </button>
+            </div>
           </div>
         </aside>
 

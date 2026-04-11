@@ -36,7 +36,7 @@ def _db_row_to_worker_profile(row: dict) -> dict:
     if len(locations) == 1:
         profile["indeed_base_url"] = infer_indeed_base_from_locations(locations)
     elif len(locations) > 1:
-        pass  # Indeed scraper uses infer_indeed_base_for_location per query
+        pass  # Indeed scraper uses www.indeed.com for all locations
     else:
         profile["indeed_base_url"] = "https://www.indeed.com"
     return profile

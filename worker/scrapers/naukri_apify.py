@@ -10,6 +10,7 @@ from utils.profile_locations import normalize_profile_locations
 
 logger = get_logger(__name__)
 
+ACTOR_URL = "https://api.apify.com/v2/acts/unfenced-group~naukri-scraper/runs"
 ACTOR_BASE = "https://api.apify.com/v2/acts/unfenced-group~naukri-scraper"
 
 
@@ -25,9 +26,13 @@ class NaukriApifyScraper(BaseScraper):
         Returns [] on poll timeout without success.
         """
         run_resp = httpx.post(
-            f"{ACTOR_BASE}/runs",
+            ACTOR_URL,
             params={"token": APIFY_TOKEN},
-            json={"keyword": keyword, "location": location, "maxItems": 50},
+            json={
+                "keyword": keyword,
+                "location": location,
+                "maxResults": 50,
+            },
             timeout=30,
         )
         run_resp.raise_for_status()
@@ -72,6 +77,9 @@ class NaukriApifyScraper(BaseScraper):
                 f"Unexpected Apify dataset response for '{keyword}' in '{location}'"
             )
             return []
+        if items:
+            logger.info(f"Sample keys: {list(items[0].keys())}")
+            logger.info(f"Sample item: {items[0]}")
         return items
 
     def scrape(self, profile: dict) -> list:
@@ -96,11 +104,11 @@ class NaukriApifyScraper(BaseScraper):
                     for item in items:
                         job = self.normalize(
                             {
-                                "title": item.get("title", ""),
+                                "title": item.get("jobTitle", ""),
                                 "company": item.get("companyName", ""),
                                 "location": item.get("location", location),
                                 "salary": item.get("salary", ""),
-                                "url": item.get("jobUrl", ""),
+                                "url": item.get("jdURL", ""),
                                 "description": item.get("jobDescription", ""),
                                 "posted_at": item.get("postingDate", ""),
                             }

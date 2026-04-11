@@ -4,23 +4,21 @@ from urllib.parse import quote_plus, urlparse, parse_qs
 from .base import BaseScraper
 from config import MAX_JOBS_PER_SITE_PER_RUN, REQUEST_DELAY_SECONDS
 from utils.logger import get_logger
-from utils.profile_locations import infer_indeed_base_for_location, normalize_profile_locations
+from utils.profile_locations import normalize_profile_locations
 from utils.job_location_filter import filter_jobs_by_western_exclusion
 
 logger = get_logger(__name__)
+
+INDEED_BASE = "https://www.indeed.com"
 
 
 class IndeedScraper(BaseScraper):
     source_name = "indeed"
 
-    def _indeed_base(self) -> str:
-        return getattr(self, "_indeed_base_url", "https://www.indeed.com").rstrip("/")
-
     def _build_url(self, keyword: str, location: str) -> str:
         q = quote_plus(keyword)
         loc = quote_plus(location)
-        base = self._indeed_base()
-        return f"{base}/jobs?q={q}&l={loc}&sort=date"
+        return f"{INDEED_BASE}/jobs?q={q}&l={loc}&sort=date"
 
     def _jk_from_href(self, href: Optional[str]) -> Optional[str]:
         if not href:
@@ -89,7 +87,7 @@ class IndeedScraper(BaseScraper):
             salary_el = scope.query_selector("[data-testid='attribute_snippet_testid']")
             salary = salary_el.inner_text().strip() if salary_el else ""
 
-            url = f"{self._indeed_base()}/viewjob?jk={jk}"
+            url = f"{INDEED_BASE}/viewjob?jk={jk}"
             return self.normalize({
                 "title": title,
                 "company": company,
@@ -126,8 +124,6 @@ class IndeedScraper(BaseScraper):
 
         locs = normalize_profile_locations(profile)
         keywords = profile.get("keywords", [])
-        explicit_base = profile.get("indeed_base_url")
-        explicit_base = str(explicit_base).rstrip("/") if explicit_base else None
 
         by_hash: dict = {}
 
@@ -138,10 +134,6 @@ class IndeedScraper(BaseScraper):
 
             for keyword in keywords[:6]:
                 for loc in locs:
-                    if explicit_base:
-                        self._indeed_base_url = explicit_base
-                    else:
-                        self._indeed_base_url = infer_indeed_base_for_location(loc)
                     try:
                         url = self._build_url(keyword, loc)
                         page.goto(url, wait_until="domcontentloaded", timeout=45000)
